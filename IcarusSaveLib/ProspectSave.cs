@@ -26,13 +26,15 @@ namespace IcarusSaveLib
 	/// </summary>
 	public class ProspectSave
 	{
+#pragma warning disable CS0649 // "field never set" - is set by Json deserializer
 		[JsonProperty(PropertyName = nameof(ProspectInfo))]
 		private FProspectInfo mProspectInfo;
 
 		[JsonProperty(PropertyName = nameof(ProspectBlob))]
 		private FProspectBlob mProspectBlob;
+#pragma warning restore CS0649
 
-		private List<UProperty> mProspectData;
+		private readonly List<UProperty> mProspectData;
 
 		[JsonIgnore]
 		public FProspectInfo ProspectInfo => mProspectInfo;
