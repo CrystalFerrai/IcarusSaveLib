@@ -37,7 +37,11 @@ namespace IcarusSaveLib
 		private readonly List<UProperty> mProspectData;
 
 		[JsonIgnore]
-		public FProspectInfo ProspectInfo => mProspectInfo;
+		public FProspectInfo ProspectInfo
+		{
+			get => mProspectInfo;
+			set => mProspectInfo = value;
+		}
 
 		[JsonIgnore]
 		public FProspectBlob ProspectBlob => mProspectBlob;
