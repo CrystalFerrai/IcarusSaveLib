@@ -64,8 +64,8 @@ namespace IcarusSaveLib
 		{
 			ProspectSave? instance;
 
-			JsonSerializer serializer = new JsonSerializer();
-			using (StreamReader sr = new StreamReader(stream))
+			JsonSerializer serializer = new();
+			using (StreamReader sr = new(stream))
 			{
 				instance = serializer.Deserialize(sr, typeof(ProspectSave)) as ProspectSave;
 			}
@@ -74,11 +74,11 @@ namespace IcarusSaveLib
 			{
 				byte[] compressed = Convert.FromBase64String(instance.mProspectBlob.BinaryBlob);
 
-				using (MemoryStream mem = new MemoryStream(compressed))
-				using (ZlibStream zstream = new ZlibStream(mem, CompressionMode.Decompress))
-				using (BinaryReader reader = new BinaryReader(zstream))
+				using (MemoryStream mem = new(compressed))
+				using (ZlibStream zstream = new(mem, CompressionMode.Decompress))
+				using (BinaryReader reader = new(zstream))
 				{
-					instance.mProspectData.AddRange(PropertySerializationHelper.ReadProperties(reader, false));
+					instance.mProspectData.AddRange(PropertySerializationHelper.ReadProperties(reader, ProspectSerlializationUtil.IcarusPackageVersion, false));
 				}
 			}
 
@@ -91,11 +91,11 @@ namespace IcarusSaveLib
 		/// <param name="stream">The stream to write to</param>
 		public void Save(Stream stream)
 		{
-			using (MemoryStream mem = new MemoryStream())
+			using (MemoryStream mem = new())
 			{
-				using (BinaryWriter writer = new BinaryWriter(mem, Encoding.ASCII, true))
+				using (BinaryWriter writer = new(mem, Encoding.ASCII, true))
 				{
-					PropertySerializationHelper.WriteProperties(mProspectData, writer, false);
+					PropertySerializationHelper.WriteProperties(mProspectData, writer, ProspectSerlializationUtil.IcarusPackageVersion, false);
 				}
 				mProspectBlob.UncompressedLength = (int)mem.Length;
 
@@ -106,9 +106,9 @@ namespace IcarusSaveLib
 				}
 
 				mem.Seek(0, SeekOrigin.Begin);
-				using (MemoryStream memCompressed = new MemoryStream())
+				using (MemoryStream memCompressed = new())
 				{
-					using (ZlibStream zstream = new ZlibStream(memCompressed, CompressionMode.Compress, true))
+					using (ZlibStream zstream = new(memCompressed, CompressionMode.Compress, true))
 					{
 						zstream.Write(mem.ToArray(), 0, (int)mem.Length);
 						zstream.Flush(); // For some reason, this stream does not seem to flush on Dispose
@@ -119,11 +119,11 @@ namespace IcarusSaveLib
 				}
 			}
 
-			JsonSerializer serializer = new JsonSerializer();
+			JsonSerializer serializer = new();
 			serializer.Formatting = Formatting.Indented;
 			serializer.NullValueHandling = NullValueHandling.Ignore;
 
-			using (StreamWriter writer = new StreamWriter(stream))
+			using (StreamWriter writer = new(stream))
 			{
 				serializer.Serialize(writer, this);
 			}

@@ -23,6 +23,17 @@ namespace IcarusSaveLib
 	/// </summary>
 	public static class ProspectSerlializationUtil
 	{
+		public static readonly PackageVersion IcarusPackageVersion;
+
+		static ProspectSerlializationUtil()
+		{
+			IcarusPackageVersion = new PackageVersion()
+			{
+				PackageVersionUE4 = EObjectUE4Version.VER_UE4_CORRECT_LICENSEE_FLAG,
+				PackageVersionUE5 = EObjectUE5Version.INVALID
+			};
+		}
+
 		/// <summary>
 		/// Deserializes the data associated with an Icarus recorder component into a list of properties
 		/// </summary>
@@ -37,13 +48,13 @@ namespace IcarusSaveLib
 			byte[] recorderBytes = new byte[dataProp.Value!.Length];
 			for (int i = 0; i < dataProp.Value.Length; ++i)
 			{
-				recorderBytes[i] = (byte)dataProp.Value![i].Value!;
+				recorderBytes[i] = ((byte[])dataProp.Value!)[i]!;
 			}
 
-			using (MemoryStream mem = new MemoryStream(recorderBytes))
-			using (BinaryReader reader = new BinaryReader(mem))
+			using (MemoryStream mem = new(recorderBytes))
+			using (BinaryReader reader = new(mem))
 			{
-				return new List<UProperty>(PropertySerializationHelper.ReadProperties(reader, true));
+				return new List<UProperty>(PropertySerializationHelper.ReadProperties(reader, IcarusPackageVersion, true));
 			}
 		}
 
@@ -54,22 +65,17 @@ namespace IcarusSaveLib
 		public static UProperty SerializeRecorderData(IEnumerable<UProperty> properties)
 		{
 			byte[] recorderBytes;
-			using (MemoryStream mem = new MemoryStream())
-			using (BinaryWriter writer = new BinaryWriter(mem))
+			using (MemoryStream mem = new())
+			using (BinaryWriter writer = new(mem))
 			{
-				PropertySerializationHelper.WriteProperties(properties, writer, true);
+				PropertySerializationHelper.WriteProperties(properties, writer, IcarusPackageVersion, true);
 				recorderBytes = mem.ToArray();
 			}
 
-			FString bytePropName = new FString(nameof(ByteProperty));
-			ArrayProperty dataProp = new ArrayProperty(new FString("BinaryData"), bytePropName);
-			dataProp.Value = new UProperty[recorderBytes.Length];
-			for (int i = 0; i < recorderBytes.Length; ++i)
+			return new ArrayProperty(new FString("BinaryData"))
 			{
-				dataProp.Value[i] = new ByteProperty(FString.Empty, bytePropName) { Value = recorderBytes[i] };
-			}
-
-			return dataProp;
+				Value = recorderBytes
+			};
 		}
 	}
 }
