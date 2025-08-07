@@ -39,11 +39,11 @@ namespace IcarusSaveLib
 		/// </summary>
 		/// <param name="recorderData">The BinaryData property of the recorder component</param>
 		/// <exception cref="ArgumentNullException">A parameter is null</exception>
-		public static IList<UProperty> DeserializeRecorderData(UProperty recorderData)
+		public static IList<FPropertyTag> DeserializeRecorderData(FPropertyTag recorderData)
 		{
-			if (recorderData.Value == null) throw new ArgumentNullException(nameof(recorderData));
+			if (recorderData.Property?.Value == null) throw new ArgumentNullException(nameof(recorderData));
 
-			ArrayProperty dataProp = (ArrayProperty)recorderData;
+			ArrayProperty dataProp = (ArrayProperty)recorderData.Property;
 
 			byte[] recorderBytes = new byte[dataProp.Value!.Length];
 			for (int i = 0; i < dataProp.Value.Length; ++i)
@@ -54,15 +54,17 @@ namespace IcarusSaveLib
 			using (MemoryStream mem = new(recorderBytes))
 			using (BinaryReader reader = new(mem))
 			{
-				return new List<UProperty>(PropertySerializationHelper.ReadProperties(reader, IcarusPackageVersion, true));
+				return new List<FPropertyTag>(PropertySerializationHelper.ReadProperties(reader, IcarusPackageVersion, true));
 			}
 		}
 
 		/// <summary>
 		/// Serializes the data associated with an Icarus recorder component into a BinaryData property
 		/// </summary>
+		/// <param name="recorderData">The BinaryData property of the recorder component</param>
 		/// <param name="properties">The properties of the recorder</param>
-		public static UProperty SerializeRecorderData(IEnumerable<UProperty> properties)
+		/// <returns>A new property to replace the recorder data property</returns>
+		public static FPropertyTag SerializeRecorderData(FPropertyTag recorderData, IEnumerable<FPropertyTag> properties)
 		{
 			byte[] recorderBytes;
 			using (MemoryStream mem = new())
@@ -71,10 +73,12 @@ namespace IcarusSaveLib
 				PropertySerializationHelper.WriteProperties(properties, writer, IcarusPackageVersion, true);
 				recorderBytes = mem.ToArray();
 			}
-
-			return new ArrayProperty(new FString("BinaryData"))
+			return new(recorderData)
 			{
-				Value = recorderBytes
+				Property = new ArrayProperty(new("BinaryData"))
+				{
+					Value = recorderBytes
+				}
 			};
 		}
 	}

@@ -34,7 +34,7 @@ namespace IcarusSaveLib
 		private FProspectBlob mProspectBlob;
 #pragma warning restore CS0649
 
-		private readonly List<UProperty> mProspectData;
+		private readonly List<FPropertyTag> mProspectData;
 
 		[JsonIgnore]
 		public FProspectInfo ProspectInfo
@@ -47,13 +47,13 @@ namespace IcarusSaveLib
 		public FProspectBlob ProspectBlob => mProspectBlob;
 
 		[JsonIgnore]
-		public IList<UProperty> ProspectData => mProspectData;
+		public IList<FPropertyTag> ProspectData => mProspectData;
 
 		public ProspectSave()
 		{
 			mProspectInfo = new FProspectInfo();
 			mProspectBlob = new FProspectBlob();
-			mProspectData = new List<UProperty>();
+			mProspectData = new List<FPropertyTag>();
 		}
 
 		/// <summary>
