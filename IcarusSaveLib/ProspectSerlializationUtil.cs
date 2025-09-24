@@ -77,6 +77,7 @@ namespace IcarusSaveLib
 			{
 				Property = new ArrayProperty(new("BinaryData"))
 				{
+					ItemType = new(new(nameof(ByteProperty))),
 					Value = recorderBytes
 				}
 			};
