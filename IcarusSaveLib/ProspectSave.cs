@@ -148,7 +148,14 @@ namespace IcarusSaveLib
 		public bool NoRespawns;
 		public int ElapsedTime;
 		public int SelectedDropPoint;
+		public List<FCustomGameSetting> CustomSettings;
 	}
+
+	public struct FCustomGameSetting
+	{
+		public string SettingRowName;
+		public int SettingValue;
+	};
 
 	public struct FProspectBlob
 	{
