@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Crystal Ferrai
+﻿// Copyright 2026 Crystal Ferrai
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 using Ionic.Zlib;
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using UeSaveGame;
@@ -26,13 +27,11 @@ namespace IcarusSaveLib
 	/// </summary>
 	public class ProspectSave
 	{
-#pragma warning disable CS0649 // "field never set" - is set by Json deserializer
 		[JsonProperty(PropertyName = nameof(ProspectInfo))]
 		private FProspectInfo mProspectInfo;
 
 		[JsonProperty(PropertyName = nameof(ProspectBlob))]
 		private FProspectBlob mProspectBlob;
-#pragma warning restore CS0649
 
 		private readonly List<FPropertyTag> mProspectData;
 
@@ -65,13 +64,18 @@ namespace IcarusSaveLib
 			ProspectSave? instance;
 
 			JsonSerializer serializer = new();
-			using (StreamReader sr = new(stream))
+			using (StreamReader sr = new(stream, leaveOpen: true))
 			{
 				instance = serializer.Deserialize(sr, typeof(ProspectSave)) as ProspectSave;
 			}
 
-			if (instance != null)
+			if (instance is not null)
 			{
+				if (Equals(instance.mProspectInfo, default(FProspectInfo)) || Equals(instance.mProspectBlob, default(FProspectBlob)))
+				{
+					return null;
+				}
+
 				byte[] compressed = Convert.FromBase64String(instance.mProspectBlob.BinaryBlob);
 
 				using (MemoryStream mem = new(compressed))
@@ -83,6 +87,39 @@ namespace IcarusSaveLib
 			}
 
 			return instance;
+		}
+
+		/// <summary>
+		/// Attempts to load a prospect from the given stream
+		/// </summary>
+		/// <param name="stream">The stream to read from</param>
+		/// <param name="save">If successful, the loaded prospect</param>
+		/// <returns>True if the prospect was successfully loaded, else false</returns>
+		public static bool TryLoad(Stream stream, [NotNullWhen(true)] out ProspectSave? save)
+		{
+			long position = 0L;
+			try
+			{
+				if (stream.CanSeek)
+				{
+					position = stream.Position;
+				}
+				save = Load(stream);
+				if (save is null && stream.CanSeek)
+				{
+					stream.Seek(position, SeekOrigin.Begin);
+				}
+				return save != null;
+			}
+			catch
+			{
+				if (stream.CanSeek)
+				{
+					stream.Seek(position, SeekOrigin.Begin);
+				}
+				save = null;
+				return false;
+			}
 		}
 
 		/// <summary>
@@ -123,7 +160,7 @@ namespace IcarusSaveLib
 			serializer.Formatting = Formatting.Indented;
 			serializer.NullValueHandling = NullValueHandling.Ignore;
 
-			using (StreamWriter writer = new(stream))
+			using (StreamWriter writer = new(stream, leaveOpen: true))
 			{
 				serializer.Serialize(writer, this);
 			}
